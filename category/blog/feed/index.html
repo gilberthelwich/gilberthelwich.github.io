@@ -12,7 +12,7 @@
 	<atom:link href="/category/blog/feed/" rel="self" type="application/rss+xml" />
 	<link></link>
 	<description>Blog o tematyce Admin/DevOps</description>
-	<lastBuildDate>Sat, 05 Oct 2024 18:22:29 +0000</lastBuildDate>
+	<lastBuildDate>Mon, 14 Oct 2024 17:25:24 +0000</lastBuildDate>
 	<language>pl-PL</language>
 	<sy:updatePeriod>
 	hourly	</sy:updatePeriod>
@@ -28,22 +28,165 @@
 	<height>32</height>
 </image> 
 	<item>
-		<title>Hello world!</title>
-		<link>/2024/09/25/hello-world/</link>
-					<comments>/2024/09/25/hello-world/#comments</comments>
+		<title>Debugowanie połączeń sieciowych na Linuxie</title>
+		<link>/2024/10/07/testowanie-polaczen-sieciowych/</link>
+					<comments>/2024/10/07/testowanie-polaczen-sieciowych/#respond</comments>
 		
 		<dc:creator><![CDATA[Gilbert]]></dc:creator>
-		<pubDate>Wed, 25 Sep 2024 15:20:05 +0000</pubDate>
+		<pubDate>Mon, 07 Oct 2024 20:00:35 +0000</pubDate>
 				<category><![CDATA[blog]]></category>
-		<guid isPermaLink="false">/?p=1</guid>
+		<guid isPermaLink="false">/?p=77</guid>
 
-					<description><![CDATA[Welcome to WordPress. This is your first post. Edit or delete it, then start writing!]]></description>
+					<description><![CDATA[Często przed wdrożeniem produkcyjnym aplikacji potrzebujemy upewnić się, że mamy wytrasowane wszystkie połączenia sieciowe zgodnie z wymaganiami. W większych firmach polityki na firewallu aplikowane są przez inne zespoły i aby uniknąć niepotrzebnego stresu, opóźnień czy nawet awarii lepiej upewnić się przed finalnym deploymentem czy aby na pewno ruch jest przepuszczony tak jak powinien. Nie ma [&#8230;]]]></description>
 										<content:encoded><![CDATA[
-<p>Welcome to WordPress. This is your first post. Edit or delete it, then start writing!</p>
+<p>Często przed wdrożeniem produkcyjnym aplikacji potrzebujemy upewnić się, że mamy wytrasowane wszystkie połączenia sieciowe zgodnie z wymaganiami. <br><br>W większych firmach polityki na firewallu aplikowane są przez inne zespoły i aby uniknąć niepotrzebnego stresu, opóźnień czy nawet awarii lepiej upewnić się przed finalnym deploymentem czy aby na pewno ruch jest przepuszczony tak jak powinien. <br><br>Nie ma w tym raczej nic trudnego gdy mamy już działającą usługę z wystawionymi portami do której chcemy się połączyć&#8230; <br>co natomiast jeśli potrzebujemy sprawdzić reguły na firewallu jeszcze przed wdrożeniem? np. gdy przygotowujemy się kilka tygodni na jedną konkretną noc?<br><br>Pokażę dzisiaj kilka ciekawych praktyk, które z pewnością przydadzą Wam się w przyszłości <img src="https://s.w.org/images/core/emoji/15.0.3/72x72/1f642.png" alt="🙂" class="wp-smiley" style="height: 1em; max-height: 1em;" /></p>
+
+
+
+<p><br><br>Gdy jest już wystawiony port który chcemy sprawdzić zwykle wykorzystujemy do tego starego, poczciwego <strong>telneta</strong>:</p>
+
+
+
+<pre class="wp-block-code"><code class=""><span style="color: #b2b2b2;">[root@client~]#</span> <span style="background-color: initial; font-family: inherit; font-size: inherit;">telnet server.local 443</span></code></pre>
+
+
+
+<p>ale to tylko jeden ze sposobów, jako alternatywę możemy użyć <strong>netcata</strong>:</p>
+
+
+
+<pre class="wp-block-code"><code class=""><span style="color: #b2b2b2;">[root@client~]#</span> n<span style="background-color: initial; font-family: inherit; font-size: inherit;">c -zv -w3 server.local 443</span></code></pre>
+
+
+
+<p style="font-size:1rem"><em>wytłumaczenie parametrów i więcej możliwości możecie znaleźć tutaj &#8211; <a href="https://linux.die.net/man/1/nc">https://linux.die.net/man/1/nc</a><br></em></p>
+
+
+
+<p>szczerze mówiąc jest to opcja do której najczęściej sięgam, największa przewaga jest taka, że w parametrze &#8222;-w&#8221; możemy podać ilość sekund po których dostaniemy timeout. <br>Również w przypadku pomyślnego skanu od razu dostajemy odpowiedź (bez czekania na input do przesłania). Dzięki temu możemy łatwo i przyjemnie wykorzystywać nc w swoich skryptach.<br><br>zajawka:</p>
+
+
+
+<pre class="wp-block-code"><code class=""><span style="color: #b2b2b2;">[root@client~]#</span> f<span style="background-color: initial; font-family: inherit; font-size: inherit;">or port in {80..82}; do nc -zv -w3 wp.pl ${port} &amp;> /dev/null &amp;&amp; echo "${port}/tcp - sukces" || echo "${port}/tcp - timeout"; done</span>
+
+<code>80/tcp - sukces
+81/tcp - timeout</code><span style="background-color: initial; font-family: inherit; font-size: inherit;">82/tcp - timeout</span>
+
+
+<span style="color: #b2b2b2;">[root@client~]#</span> for node in {01..10}; do nc -zv -w3 azure-www-${node}.local 443 &amp;> /dev/null &amp;&amp; echo "--443/tcp--> azure-www-${node}.local - sukces" || echo "--443/tcp--> azure-www-${node}.local - timeout"; done
+
+--443/tcp--> azure-www-01.local - sukces
+--443/tcp--> azure-www-02.local - timeout
+--443/tcp--> azure-www-03.local - sukces
+--443/tcp--> azure-www-04.local - timeout
+--443/tcp--> azure-www-05.local - sukces
+--443/tcp--> azure-www-06.local - timeout
+--443/tcp--> azure-www-07.local - sukces
+--443/tcp--> azure-www-08.local - timeout
+--443/tcp--> azure-www-09.local - sukces
+--443/tcp--> azure-www-10.local - timeout</code></pre>
+
+
+
+<p><br></p>
+
+
+
+<p>mało kto wie, ale w przypadku gdy debugujemy np. <strong>kontenery </strong>i nie mamy dostępu do pobrania pakietów możemy do przetestowania połączenia wykorzystać CURLa, który często jest preinstalowany w obrazie <img src="https://s.w.org/images/core/emoji/15.0.3/72x72/1f642.png" alt="🙂" class="wp-smiley" style="height: 1em; max-height: 1em;" /> <strong>(ping to bardzo słaby sposób na testowanie połączenia)<br></strong><br>jeżeli zależy nam na połączeniu HTTP/HTTPS możemy po prostu sprawdzić:</p>
+
+
+
+<pre class="wp-block-code"><code class=""><span style="color: #b2b2b2;">[root@client~]#</span> <span style="background-color: initial; font-family: inherit; font-size: inherit;">curl server.local:443</span></code></pre>
+
+
+
+<p>lub jeżeli chcemy sprawdzić dowolny port TCP możemy użyć:</p>
+
+
+
+<pre class="wp-block-code"><code class=""><span style="color: #b2b2b2;">[root@client~]#</span> <span style="background-color: initial; font-family: inherit; font-size: inherit;">curl -v telnet://server.local:9200</span></code></pre>
+
+
+
+<p><br><br>co natomiast gdy nie mamy jeszcze otwartego portu a chcemy sprawdzić czy firewall wewnętrzny/zewnętrzny przepuści nas na drugi serwer <img src="https://s.w.org/images/core/emoji/15.0.3/72x72/1f914.png" alt="🤔" class="wp-smiley" style="height: 1em; max-height: 1em;" />? <strong>możemy tymczasowo otworzyć taki port</strong> <img src="https://s.w.org/images/core/emoji/15.0.3/72x72/1f60e.png" alt="😎" class="wp-smiley" style="height: 1em; max-height: 1em;" /> używając wcześniej wspomnianego netcata &#8211; służy do tego polecenie:</p>
+
+
+
+<pre class="wp-block-code"><code class=""><span style="color: #b2b2b2;">[root@server~]#</span> <span style="background-color: initial; font-family: inherit; font-size: inherit;">nc -l -p 8080</span></code></pre>
+
+
+
+<p>w ten sposób otwieramy port i rozpoczynamy na nim nasłuchiwanie <br>(pamiętaj, że porty &lt; 1024 są uprzywilejowane i nie otworzymy ich bez podniesienia uprawnień)<br><br>na drugim serwerze możemy spróbować nawiązać połączenie, a nawet przesłać dane</p>
+
+
+
+<pre class="wp-block-code"><code class=""><span style="color: #b2b2b2;">[root@client~]#</span> <span style="background-color: initial; font-family: inherit; font-size: inherit;">telnet 127.0.0.1 8080</span>
+<code>Trying 127.0.0.1…
+Connected to 127.0.0.1.
+Escape character is '^]'.
+testor inwestor :)</code></code></pre>
+
+
+
+<p><br>co tak jest widoczne na serwerze z otwartym portem</p>
+
+
+
+<pre class="wp-block-code"><code class=""><span style="color: #b2b2b2;">[root@server~]#</span> <span style="background-color: initial; font-family: inherit; font-size: inherit;">nc -l -p 8080</span>
+testor inwestor :)</code></pre>
+
+
+
+<p>(tym sposobem możemy zrobić <a href="https://www.acunetix.com/blog/web-security-zone/what-is-reverse-shell/" data-type="link" data-id="https://www.acunetix.com/blog/web-security-zone/what-is-reverse-shell/">reverse shell</a> ;))</p>
+
+
+
+<p><br></p>
+
+
+
+<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:42% auto"><figure class="wp-block-media-text__media"><a href="https://www.redshirtjeff.com/shop/p/it-was-dns-shirt"><img fetchpriority="high" decoding="async" width="800" height="800" src="/wp-content/uploads/2024/10/image.png" alt="" class="wp-image-143 size-full" srcset="/wp-content/uploads/2024/10/image.png 800w, /wp-content/uploads/2024/10/image-300x300.png 300w, /wp-content/uploads/2024/10/image-150x150.png 150w, /wp-content/uploads/2024/10/image-768x768.png 768w" sizes="(max-width: 800px) 100vw, 800px" /></a></figure><div class="wp-block-media-text__content">
+<p><strong>DNS </strong>&#8211; w przypadku problemów sieciowych nauczony doświadczeniem polecam sprawdzić na jakie adresy rozwiązuje się dany endpoint do którego próbujemy się połączyć.<br><br>przeszkodą może być zostawienie starego adresu IP w rekordzie A, przez co losowy &#8222;strzał&#8221; do endpointu kończy się timeoutem <img src="https://s.w.org/images/core/emoji/15.0.3/72x72/1f62b.png" alt="😫" class="wp-smiley" style="height: 1em; max-height: 1em;" /><br><br>gdy korzystamy z load balancerów schowanych na przykład za GTM od F5 (więcej info <a href="https://www.thenetworkdna.com/2024/01/f5-load-balancers-gtm-vs-ltm.html" data-type="link" data-id="https://www.thenetworkdna.com/2024/01/f5-load-balancers-gtm-vs-ltm.html">tutaj</a>) musimy pamiętać o wytrasowaniu się do wszystkich adresów IP loadbalancerów, które GTM może nam zaserwować, w przeciwnym wypadku wykorzystując balansowanie round-robin co drugi request będzie się timeoutował (a w przypadku global availability przestanie nam działać połączenie po przepięciu się do drugiej serwerowni <img src="https://s.w.org/images/core/emoji/15.0.3/72x72/1f642.png" alt="🙂" class="wp-smiley" style="height: 1em; max-height: 1em;" />)</p>
+</div></div>
+
+
+
+<p><br><br><strong>na sam koniec zostawiłem narzędzia które często pomogły mi znaleźć przyczynę gdy nie miałem już żadnych pomysłów<br></strong>mam na myśli<strong> lsof, strace i tcpdump<br></strong><br>polecenie <strong>lsof </strong>standardowo pokazuje otwarte pliki (co też jest przydatne, ale nie w tym wpisie)<br>natomiast z przełącznikiem -i wyświetla listę nawiązanych w danym momencie połączeń sieciowych na serwerze</p>
+
+
+
+<pre class="wp-block-code"><code class=""><span style="color: #b2b2b2;">[root@server~]#</span> lsof -i
+...
+dnf       26754   root   24u  IPv4 181335      0t0  TCP serwer.local:59472->proxy14.fedoraproject.org:https (ESTABLISHED)
+...</code></pre>
+
+
+
+<p>w ten sposób możemy zobaczyć kto aktualnie jest podłączony do serwera np. po http/https/ssh/&#8230;<br>do jakich adresów serwer nawiązuje połączenie (np. przy pobieraniu pakietów)<br><br><br>narzędzie <strong>strace </strong>&#8211; pozwala na wyświetlenie wywołań systemowych (baardzo przydatne polecenie, natomiast jego wynik należy traktować bardziej jako źródło do grepowania, niż do czytania w całości)<br><br>dodając do niego parametr &#8222;-e&#8221; możemy podpiąć się pod konkretne wywołanie systemowe (w tym przypadku będziemy korzystać z connect) <br>flaga &#8222;-f&#8221; oznacza natomiast, że chcemy podpinać się pod forki procesu</p>
+
+
+
+<pre class="wp-block-code"><code class=""><span style="color: #b2b2b2;">[root@client~]#</span> strace -e connect mysql -h serwer.local
+...
+connect(3, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("8.8.8.8")}, 16) = 0
+connect(3, {sa_family=AF_INET, sin_port=htons(3306), sin_addr=inet_addr("192.168.0.11")}, 16) = 0
+connect(3, {sa_family=AF_INET, sin_port=htons(3306), sin_addr=inet_addr("10.11.0.1")}, 16) = 0
+REFUSED (Connection refused)
+connect(3, {sa_family=AF_INET, sin_port=htons(3306), sin_addr=inet_addr("192.168.0.11")}, 16) = 0
+ERROR 1045 (28000): Access denied for user 'root'@'192.168.0.11' (using password: NO)
+</code></pre>
+
+
+
+<p>możemy podpiąć się stracem pod komende lub wywołać binarkę i prześwietlić do jakich konkretnie adresów IP &#8222;uderza&#8221; aplikacja.</p>
+
+
+
+<p>komanda o szerokim zastosowaniu, jednym z nich może być określenie do jakiego adresu IP klastra bazy danych łączy się binarka (gdy przykładowo wykorzystujemy MSSQL i MultiSubnetFailover=True).<br><br><br>ostatnie narzędzie w tym wpisie o którym chciałbym powiedzieć/przypomnieć to <strong>tcpdump</strong>. <br>choć pewnie większości bardzo dobrze znane, nie mogło go tutaj zabraknąć.<br><br>służy do odpalenia nasłuchiwania na karcie sieciowej i pozwala zrzucać pakiety do pliku w celu ich późniejszej analizy.<br>Największą zaletą tego narzędzia jest surowy wynik, który możemy odpalić w WireSharku i w czytelniejszej formie filtrować, analizować niskopoziomowe pakiety. &#8222;Surówka&#8221; daje nam też możliwość przesłania zebranej komunikacji sieciowej do sieciowców w celu głębszej analizy.</p>
 ]]></content:encoded>
 					
-					<wfw:commentRss>/2024/09/25/hello-world/feed/</wfw:commentRss>
-			<slash:comments>1</slash:comments>
+					<wfw:commentRss>/2024/10/07/testowanie-polaczen-sieciowych/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
 		
 		
 			</item>
